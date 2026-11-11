@@ -94,11 +94,42 @@ footer{text-align:center;color:var(--gold);padding:20px 5px;font-weight:bold}
 </section></div></main>
 <script>
 function toggle(id){document.getElementById(id).classList.toggle('show')}
-document.getElementById('rsvp').addEventListener('submit',e=>{
+const SHEETS_ENDPOINT = "https://script.google.com/macros/s/AKfycbzZeEdO-S-34Sc_tjLjQzI7OLhbMNK0SNU4ZWrHx1w43pvC9-yT0Ty6z0k4Lk8JM8-v/exec";
+
+document.getElementById('rsvp').addEventListener('submit', async e=>{
  e.preventDefault();
- const n=document.getElementById('name').value.trim(), p=document.getElementById('phone').value.trim(), q=document.getElementById('qty').value;
- const msg=`Olá! Quero confirmar minha presença no Réveillon dos Amigos 2027.%0A%0ANome: ${encodeURIComponent(n)}%0ATelefone: ${encodeURIComponent(p)}%0AQuantidade de participantes: ${q}`;
- window.open('https://wa.me/5538999817726?text='+msg,'_blank');
+ const n=document.getElementById('name').value.trim();
+ const p=document.getElementById('phone').value.trim();
+ const q=document.getElementById('qty').value;
+
+ if (!n || !p) {
+   alert('Preencha seu nome e telefone para continuar.');
+   return;
+ }
+
+ // Abre o WhatsApp diretamente no clique do convidado.
+ const msg=`Olá! Quero confirmar minha presença no Réveillon dos Amigos 2027.\\n\\nNome: ${n}\\nTelefone: ${p}\\nQuantidade de participantes: ${q}`;
+ const whatsappUrl='https://wa.me/5538999817726?text='+encodeURIComponent(msg);
+ const whatsappWindow=window.open(whatsappUrl,'_blank');
+
+ // Envia os mesmos dados ao Apps Script. O modo no-cors não permite
+ // ler a resposta do Google, por isso a gravação precisa ser conferida na planilha.
+ const dados = new URLSearchParams({
+   nome: n,
+   telefone: p,
+   quantidade: q
+ });
+
+ try {
+   await fetch(SHEETS_ENDPOINT, {
+     method: 'POST',
+     mode: 'no-cors',
+     body: dados
+   });
+   alert('Seus dados foram enviados para registro. Para concluir a confirmação, envie também a mensagem que foi aberta no WhatsApp.');
+ } catch (erro) {
+   alert('O WhatsApp foi aberto, mas não foi possível confirmar o envio à planilha. Avise o organizador.');
+ }
 });
 function countdown(){
  const target=new Date('2027-01-01T00:30:00-03:00').getTime(), now=Date.now(), d=Math.max(0,target-now);
